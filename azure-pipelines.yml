@@ -99,7 +99,7 @@ jobs:
     # so we delete it.
     # If previous steps have failed then don't run.
   - bash: |
-  
+
       # Work-around for tempory Bazel's apt repository issue.
       curl https://bazel.build/bazel-release.pub.gpg | sudo apt-key add -
 
@@ -281,6 +281,8 @@ jobs:
       # display the test console output
       cat test_console_output_dsbase.txt
 
+      mv test_results_dsbase.xml $(Pipeline.Workspace)/logs/
+
       grep --quiet " FAIL 0 " test_console_output_dsbase.txt
 
     workingDirectory: $(Pipeline.Workspace)/dsBaseClient
@@ -303,7 +305,7 @@ jobs:
       exit $issue_count
 
     workingDirectory: $(Pipeline.Workspace)/logs
-    displayName: 'Check for errors & Failures in JUnit file'
+    displayName: 'Check for errors & Failures in dsBaseClient JUnit file'
     condition: succeededOrFailed()
 
 
@@ -372,7 +374,7 @@ jobs:
 
       # Merge coverage results
       cat test_results_dsbase.txt test_results_dsdanger.txt > $(Pipeline.Workspace)/logs/test_console_output.txt
-      xml_grep --pretty_print indented --wrap "testsuites" --descr "" --cond "testsuite" test_results_dsbase.xml test_results_dsdanger.xml > test_results.xml
+      # xml_grep --pretty_print indented --wrap "testsuites" --descr "" --cond "testsuite" test_results_dsbase.xml test_results_dsdanger.xml > test_results.xml
 
       # Create 'coveragelist.csv'
       # sudo R -q -e '
@@ -401,7 +403,7 @@ jobs:
       cat test_console_output_dsdanger.txt
 
       mv coveragelist.csv $(Pipeline.Workspace)/logs
-      mv test_results.xml $(Pipeline.Workspace)/logs
+      mv test_results_dsdanger.xml $(Pipeline.Workspace)/logs
 
       grep --quiet " FAIL 0 " test_console_output_dsdanger.txt
 
@@ -417,7 +419,7 @@ jobs:
   - bash: |
 
       # Strip out when error and failure = 0 and count the number of times it does not.
-      issue_count=$(sed 's/failures="0" errors="0"//' test_results.xml | sed 's/errors="0" failures="0"//' | grep --count errors=)
+      issue_count=$(sed 's/failures="0" errors="0"//' test_results_dsdanger.xml | sed 's/errors="0" failures="0"//' | grep --count errors=)
       echo "Number of testsuites with issues: "$issue_count
       echo "Testsuites with issues:"
       sed 's/failures="0" errors="0"//' test_results.xml | sed 's/errors="0" failures="0"//' | grep errors= > issues.log
@@ -425,7 +427,7 @@ jobs:
       exit $issue_count
 
     workingDirectory: $(Pipeline.Workspace)/logs
-    displayName: 'Check for errors & Failures in JUnit file'
+    displayName: 'Check for errors & Failures in dsDanger JUnit file'
     condition: succeededOrFailed()
 
 
@@ -490,7 +492,7 @@ jobs:
     # Output some important version numbers to file. This gets added to the testStatus 
     # commit so it can be parsed and used on the status table.
   - bash: |
-  
+
       echo 'branch:'$(branchName) >> $(datetime).txt
       echo 'os:'$(lsb_release -ds) >> $(datetime).txt
       echo 'R:'$(R --version | head -n 1) >> $(datetime).txt
@@ -506,7 +508,7 @@ jobs:
     # TODO: Automatically pull in better email/name info from somewhere.
     # TODO: More debug info in commit message
   - bash: |
-  
+
       # Git needs some config set to be able to push to a repo. 
       git config --global user.email "you@example.com"
       git config --global user.name "Azure pipeline"
@@ -525,19 +527,23 @@ jobs:
       cp $(Pipeline.Workspace)/logs/coveragelist.csv logs/$(projectName)/$(branchName)/
       cp $(Pipeline.Workspace)/logs/coveragelist.csv logs/$(projectName)/$(branchName)/$(datetime).csv
 
-      cp $(Pipeline.Workspace)/logs/test_results.xml logs/$(projectName)/$(branchName)/
-      cp $(Pipeline.Workspace)/logs/test_results.xml logs/$(projectName)/$(branchName)/$(datetime).xml
+      cp $(Pipeline.Workspace)/logs/test_results_dsbase.xml logs/$(projectName)/$(branchName)/
+      cp $(Pipeline.Workspace)/logs/test_results_dsbase.xml logs/$(projectName)/$(branchName)/$(datetime)_dsbase.xml
+      cp $(Pipeline.Workspace)/logs/test_results_dsdanger.xml logs/$(projectName)/$(branchName)/
+      cp $(Pipeline.Workspace)/logs/test_results_dsdanger.xml logs/$(projectName)/$(branchName)/$(datetime)_dsdanger.xml
 
       cp $(Pipeline.Workspace)/logs/$(datetime).txt logs/$(projectName)/$(branchName)/
 
       # Run the script to parse the results and build the html pages.
       # status.py JUnit_file.xml coverage_file.csv output_file.html local_repo_path remote_repo_name branch
-      source/status.py logs/$(projectName)/$(branchName)/$(datetime).xml logs/$(projectName)/$(branchName)/$(datetime).csv logs/$(projectName)/$(branchName)/$(datetime).txt status.html $(Pipeline.Workspace)/$(projectName) $(projectName) $(branchName)
+      # source/status.py logs/$(projectName)/$(branchName)/$(datetime).xml logs/$(projectName)/$(branchName)/$(datetime).csv logs/$(projectName)/$(branchName)/$(datetime).txt status.html $(Pipeline.Workspace)/$(projectName) $(projectName) $(branchName)
 
-      cp status.html docs/$(projectName)/$(branchName)/latest/index.html
+      #cp status.html docs/$(projectName)/$(branchName)/latest/index.html
       git add logs/$(projectName)/$(branchName)/coveragelist.csv
-      git add logs/$(projectName)/$(branchName)/test_results.xml
-      git add logs/$(projectName)/$(branchName)/$(datetime).xml
+      git add logs/$(projectName)/$(branchName)/test_results_dsbase.xml
+      git add logs/$(projectName)/$(branchName)/test_results_dsdanger.xml
+      git add logs/$(projectName)/$(branchName)/$(datetime)_dsbase.xml
+      git add logs/$(projectName)/$(branchName)/$(datetime)_dsdanger.xml
       git add logs/$(projectName)/$(branchName)/$(datetime).csv
       git add logs/$(projectName)/$(branchName)/$(datetime).txt
       git add docs/$(projectName)/$(branchName)/latest/index.html
