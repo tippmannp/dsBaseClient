@@ -336,8 +336,7 @@ ds.glm <- function(formulas=NULL, data=NULL, family=NULL, offset=NULL, weights=N
   
   formulas_ = c()
     
-  for (i in seq_along(formulas)) {
-    formula = formulas[i]
+  for (formula in formulas) {    
     # verify that 'formula' was set
     if(is.null(formula)){
       stop(" Please provide a valid regression formula!", call.=FALSE)
@@ -373,7 +372,7 @@ ds.glm <- function(formulas=NULL, data=NULL, family=NULL, offset=NULL, weights=N
     message(" -- Verifying the variables in the model")
     # call the function that checks the variables in the formula are defined (exist) on the server site and are not missing at complete
       
-  for (formula in formulas) {
+  for (formula in formulas_) {
     glmChecks(formula, data, offset, weights, datasources)
   }
   }else{
@@ -396,7 +395,7 @@ ds.glm <- function(formulas=NULL, data=NULL, family=NULL, offset=NULL, weights=N
 
 #IDENTIFY THE CORRECT DIMENSION FOR START BETAs VIA CALLING FIRST COMPONENT OF glmDS
 
-   cally1 <- call('glmDS1s', formulas, family, weights, offset, data)
+   cally1 <- call('glmDS1s', formulas_, family, weights, offset, data)
 
    study.summary.0 <- DSI::datashield.aggregate(datasources, cally1)
 
@@ -527,7 +526,7 @@ if(sum.y.invalid>0||sum.Xpar.invalid>0||sum.w.invalid>0||sum.o.invalid>0||sum.gl
     message("Iteration ", iteration.count, "...")
 
 #NOW CALL SECOND COMPONENT OF glmDS TO GENERATE SCORE VECTORS AND INFORMATION MATRICES
-    cally2 <- call('glmDS2s', formulas, family, beta.vect.temp, offset, weights, data)
+    cally2 <- call('glmDS2s', formulas_, family, beta.vect.temp, offset, weights, data)
 
       study.summary <- DSI::datashield.aggregate(datasources, cally2)
 
