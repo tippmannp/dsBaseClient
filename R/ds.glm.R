@@ -321,7 +321,7 @@
 #' datashield.logout(connections) 
 #' }
 #'
-ds.glm <- function(formula=NULL, data=NULL, family=NULL, offset=NULL, weights=NULL, checks=FALSE, maxit=20, CI=0.95,
+ds.glm <- function(formulas=NULL, data=NULL, family=NULL, offset=NULL, weights=NULL, checks=FALSE, maxit=20, CI=0.95,
                      viewIter=FALSE, viewVarCov=FALSE, viewCor=FALSE, datasources=NULL) {
 
  # look for DS connections
@@ -333,11 +333,13 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, offset=NULL, weights=NU
   if(!(is.list(datasources) && all(unlist(lapply(datasources, function(d) {methods::is(d,"DSConnection")}))))){
     stop("The 'datasources' were expected to be a list of DSConnection-class objects", call.=FALSE)
   }
-
-  # verify that 'formula' was set
-  if(is.null(formula)){
-    stop(" Please provide a valid regression formula!", call.=FALSE)
-  }
+  
+  for (i in seq_along(formulas)) {
+    formula = formulas[i]
+    # verify that 'formula' was set
+    if(is.null(formula)){
+      stop(" Please provide a valid regression formula!", call.=FALSE)
+    }
 
 # check if user gave offset or weights directly in formula, if so the argument 'offset' or 'weights'
 # to provide name of offset or weights variable
@@ -350,8 +352,9 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, offset=NULL, weights=NU
        cat("\n using the offset or weights argument.\n\n")
 	}
 
-  formula <- stats::as.formula(formula)
-
+    formulas[i] <- stats::as.formula(formula)
+      
+  }
 
   # check that 'family' was set
   if(is.null(family)){
@@ -367,8 +370,10 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, offset=NULL, weights=NU
   if(checks){
     message(" -- Verifying the variables in the model")
     # call the function that checks the variables in the formula are defined (exist) on the server site and are not missing at complete
-
-   glmChecks(formula, data, offset, weights, datasources)
+      
+  for (formula in formulas) {
+    glmChecks(formula, data, offset, weights, datasources)
+  }
   }else{
     #message("WARNING:'checks' is set to FALSE; variables in the model are not checked and error messages may not be intelligible!")
   }
@@ -389,7 +394,7 @@ ds.glm <- function(formula=NULL, data=NULL, family=NULL, offset=NULL, weights=NU
 
 #IDENTIFY THE CORRECT DIMENSION FOR START BETAs VIA CALLING FIRST COMPONENT OF glmDS
 
-   cally1 <- call('glmDS1', formula, family, weights, offset, data)
+   cally1 <- call('glmDS1s', formulas, family, weights, offset, data)
 
    study.summary.0 <- DSI::datashield.aggregate(datasources, cally1)
 
@@ -520,7 +525,7 @@ if(sum.y.invalid>0||sum.Xpar.invalid>0||sum.w.invalid>0||sum.o.invalid>0||sum.gl
     message("Iteration ", iteration.count, "...")
 
 #NOW CALL SECOND COMPONENT OF glmDS TO GENERATE SCORE VECTORS AND INFORMATION MATRICES
-    cally2 <- call('glmDS2', formula, family, beta.vect.temp, offset, weights, data)
+    cally2 <- call('glmDS2s', formulas, family, beta.vect.temp, offset, weights, data)
 
       study.summary <- DSI::datashield.aggregate(datasources, cally2)
 
@@ -751,20 +756,23 @@ if(sum.y.invalid>0||sum.Xpar.invalid>0||sum.w.invalid>0||sum.o.invalid>0||sum.gl
     }
 
     model.parameters<-cbind(model.parameters,ci.mat)
+      
+      
+    # TODO adapt
 
-    if(!is.null(offset)&&!is.null(weights)){
-       formulatext <- paste0(Reduce(paste, deparse(formula)), paste0(" + offset(", offset, ")"), paste0(" + weights(", weights, ")"))
-       }
-    if(!is.null(offset)&&is.null(weights)){
-       formulatext <- paste0(Reduce(paste, deparse(formula)), paste0(" + offset(", offset, ")"))
-       }
-    if(is.null(offset)&&!is.null(weights)){
-       formulatext <- paste0(Reduce(paste, deparse(formula)), paste0(" + weights(", weights, ")"))
-       }
+    #if(!is.null(offset)&&!is.null(weights)){
+    #   formulatext <- paste0(Reduce(paste, deparse(formula)), paste0(" + offset(", offset, ")"), paste0(" + weights(", weights, ")"))
+    #   }
+    #if(!is.null(offset)&&is.null(weights)){
+    #   formulatext <- paste0(Reduce(paste, deparse(formula)), paste0(" + offset(", offset, ")"))
+    #   }
+    #if(is.null(offset)&&!is.null(weights)){
+    #   formulatext <- paste0(Reduce(paste, deparse(formula)), paste0(" + weights(", weights, ")"))
+    #   }
 
-    if(is.null(offset)&&is.null(weights)){
-       formulatext <- Reduce(paste, deparse(formula))
-       }
+    #if(is.null(offset)&&is.null(weights)){
+    #   formulatext <- Reduce(paste, deparse(formula))
+    #   }
 
     if(!viewVarCov & !viewCor){
       glmds <- list(
@@ -776,7 +784,7 @@ if(sum.y.invalid>0||sum.Xpar.invalid>0||sum.w.invalid>0||sum.o.invalid>0||sum.gl
             nsubs=nsubs.total,
             iter=iteration.count,
             family=f,
-            formula=formulatext,
+            formula='<formulas>', # formulatext, TODO adapt
             coefficients=model.parameters,
             dev=dev.total,
             df=(nsubs.total-length(beta.vect.next)),
@@ -800,7 +808,7 @@ if(sum.y.invalid>0||sum.Xpar.invalid>0||sum.w.invalid>0||sum.o.invalid>0||sum.gl
 			nsubs=nsubs.total,
                         iter=iteration.count,
                         family=f,
-                        formula=formulatext,
+                        formula='<formulas>', # formulatext, TODO adapt
                         coefficients=model.parameters,
                         dev=dev.total,
                         df=(nsubs.total-length(beta.vect.next)),
@@ -820,7 +828,7 @@ if(sum.y.invalid>0||sum.Xpar.invalid>0||sum.w.invalid>0||sum.o.invalid>0||sum.gl
 			nsubs=nsubs.total,
                         iter=iteration.count,
 	                family=f,
-                        formula=formulatext,
+                        formula='<formulas>', # formulatext, TODO adapt
                         coefficients=model.parameters,
                         dev=dev.total,
                         df=(nsubs.total-length(beta.vect.next)),
@@ -841,7 +849,7 @@ if(sum.y.invalid>0||sum.Xpar.invalid>0||sum.w.invalid>0||sum.o.invalid>0||sum.gl
 			nsubs=nsubs.total,
                         iter=iteration.count,
 	                family=f,
-                        formula=formulatext,
+                        formula='<formulas>', # formulatext, TODO adapt
                         coefficients=model.parameters,
                         dev=dev.total,
                         df=(nsubs.total-length(beta.vect.next)),
