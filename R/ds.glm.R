@@ -334,6 +334,8 @@ ds.glm <- function(formulas=NULL, data=NULL, family=NULL, offset=NULL, weights=N
     stop("The 'datasources' were expected to be a list of DSConnection-class objects", call.=FALSE)
   }
   
+  formulas_ = c()
+    
   for (i in seq_along(formulas)) {
     formula = formulas[i]
     # verify that 'formula' was set
@@ -352,7 +354,7 @@ ds.glm <- function(formulas=NULL, data=NULL, family=NULL, offset=NULL, weights=N
        cat("\n using the offset or weights argument.\n\n")
 	}
 
-    formulas[i] <- stats::as.formula(formula)
+    formulas_  = c(formulas_, stats::as.formula(formula))
       
   }
 
