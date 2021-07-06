@@ -857,38 +857,3 @@ if(sum.y.invalid>0||sum.Xpar.invalid>0||sum.w.invalid>0||sum.o.invalid>0||sum.gl
 
 }
 #ds.glm
-
-
-ds.glms <- function(wantedlabels=NULL, data=NULL, family=NULL, offset=NULL, weights=NULL, checks=FALSE, maxit=20, CI=0.95,
-                     viewIter=FALSE, viewVarCov=FALSE, viewCor=FALSE, datasources=NULL) {
-    # initialize (all-one) vector for univariate beta estimates
-    unibeta = rep(1, length(wantedlabels))
-    
-        # BLOCK START: this loop can also be implemented as one call to ds.glm
-    # glm_memo can be used before to eliminate recomputation
-    
-    # iterate through all variables
-    for (i in 1:length(wantedlabels)) {
-        # variable name
-        label_i = wantedlabels[i]
-        
-        # calculate y ~ 1 + label_i estimate
-        
-        # qualify variable names with table name
-        var_x = paste('D', y, sep='$')
-        var_y = paste('D', label_i, sep='$')
-        # formula
-        myformula = paste(var_y, var_x, sep='~')
-        
-        # get effect estimates – several iterations
-        interim = ds.glm(myformula, family=family)
-        # interim = ds.glm(myformula, family='gaussian')
-        res = interim$nsubs/(interim$nsubs - 1) * interim$coefficients[2,1]
-        
-        # store result
-        unibeta[i] = res
-    }
-    
-    return(unibeta)
-}
-#ds.glms
