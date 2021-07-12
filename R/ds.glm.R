@@ -321,8 +321,17 @@
 #' datashield.logout(connections) 
 #' }
 #'
-ds.glm <- function(formulas=NULL, data=NULL, family=NULL, offset=NULL, weights=NULL, checks=FALSE, maxit=20, CI=0.95,
+ds.glm <- function(formulas_string=NULL, data=NULL, family=NULL, offset=NULL, weights=NULL, checks=FALSE, maxit=20, CI=0.95,
                      viewIter=FALSE, viewVarCov=FALSE, viewCor=FALSE, datasources=NULL) {
+    
+    formula_strings = sapply(
+        strsplit(
+            formulas_string,
+            split = '|',
+            fixed = T
+        ),
+        indentity
+    )
 
  # look for DS connections
   if(is.null(datasources)){
@@ -334,18 +343,18 @@ ds.glm <- function(formulas=NULL, data=NULL, family=NULL, offset=NULL, weights=N
     stop("The 'datasources' were expected to be a list of DSConnection-class objects", call.=FALSE)
   }
   
-  formulas_ = c()
+  formulas = c()
     
-  for (formula in formulas) {    
+  for (formula_string in formula_strings) {    
     # verify that 'formula' was set
-    if(is.null(formula)){
+    if(is.null(formula_string)){
       stop(" Please provide a valid regression formula!", call.=FALSE)
     }
 
 # check if user gave offset or weights directly in formula, if so the argument 'offset' or 'weights'
 # to provide name of offset or weights variable
-    if(sum(as.numeric(grepl('offset', formula, ignore.case=TRUE)))>0 ||
-       sum(as.numeric(grepl('weights', formula, ignore.case=TRUE)))>0)
+    if(sum(as.numeric(grepl('offset', formula_string, ignore.case=TRUE)))>0 ||
+       sum(as.numeric(grepl('weights', formula_string, ignore.case=TRUE)))>0)
 	{
        cat("\n\n WARNING: you may have specified an offset or regression weights")
        cat("\n as part of the model formula. In ds.glm (unlike the usual glm in R)")
@@ -353,7 +362,10 @@ ds.glm <- function(formulas=NULL, data=NULL, family=NULL, offset=NULL, weights=N
        cat("\n using the offset or weights argument.\n\n")
 	}
 
-    formulas_  = c(formulas_, stats::as.formula(formula))
+    formulas  = append(
+        formulas,
+        stats::as.formula(formula_string)
+    )
       
   }
 
@@ -372,7 +384,7 @@ ds.glm <- function(formulas=NULL, data=NULL, family=NULL, offset=NULL, weights=N
     message(" -- Verifying the variables in the model")
     # call the function that checks the variables in the formula are defined (exist) on the server site and are not missing at complete
       
-  for (formula in formulas_) {
+  for (formula in formulas) {
     glmChecks(formula, data, offset, weights, datasources)
   }
   }else{
@@ -395,7 +407,7 @@ ds.glm <- function(formulas=NULL, data=NULL, family=NULL, offset=NULL, weights=N
 
 #IDENTIFY THE CORRECT DIMENSION FOR START BETAs VIA CALLING FIRST COMPONENT OF glmDS
 
-   cally1 <- call('glmDS1s', formulas_, family, weights, offset, data)
+   cally1 <- call('glmDS1s', formulas_string, family, weights, offset, data)
 
    study.summary.0 <- DSI::datashield.aggregate(datasources, cally1)
 
@@ -526,7 +538,7 @@ if(sum.y.invalid>0||sum.Xpar.invalid>0||sum.w.invalid>0||sum.o.invalid>0||sum.gl
     message("Iteration ", iteration.count, "...")
 
 #NOW CALL SECOND COMPONENT OF glmDS TO GENERATE SCORE VECTORS AND INFORMATION MATRICES
-    cally2 <- call('glmDS2s', formulas_, family, beta.vect.temp, offset, weights, data)
+    cally2 <- call('glmDS2s', formulas_string, family, beta.vect.temp, offset, weights, data)
 
       study.summary <- DSI::datashield.aggregate(datasources, cally2)
 
