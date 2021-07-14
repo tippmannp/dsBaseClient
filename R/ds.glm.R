@@ -330,7 +330,7 @@ ds.glm <- function(formulas_string=NULL, data=NULL, family=NULL, offset=NULL, we
             split = '|',
             fixed = T
         ),
-        indentity
+        identity
     )
 
  # look for DS connections
