@@ -324,10 +324,19 @@
 ds.glm <- function(formulas_string=NULL, data=NULL, family=NULL, offset=NULL, weights=NULL, checks=FALSE, maxit=20, CI=0.95,
                      viewIter=FALSE, viewVarCov=FALSE, viewCor=FALSE, datasources=NULL) {
     
-    n = length(formulas_string)
+    wantedlabels_y = sapply(
+        strsplit(
+            formulas_string,
+            split = '|',
+            fixed = T
+        ),
+        identity
+    )
     
-    wantedlabels = formulas_string[1:n-1]
-    y = formulas_string[n]
+    n = length(wantedlabels_y)
+    
+    wantedlabels = wantedlabels_y[1:n-1]
+    y = wantedlabels_y[n]
     
     formula_strings = c()
     
@@ -347,14 +356,6 @@ ds.glm <- function(formulas_string=NULL, data=NULL, family=NULL, offset=NULL, we
         formula_strings = append(formula_strings, myformula)
     }
     
-    #formula_strings = sapply(
-    #    strsplit(
-    #        formulas_string,
-    #        split = '|',
-    #        fixed = T
-    #    ),
-    #    identity
-    #)
 
  # look for DS connections
   if(is.null(datasources)){
