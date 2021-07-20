@@ -327,7 +327,7 @@ ds.glm <- function(formulas_string=NULL, data=NULL, family=NULL, offset=NULL, we
     wantedlabels_y = sapply(
         strsplit(
             formulas_string,
-            split = '|',
+            split = ',',
             fixed = T
         ),
         identity
