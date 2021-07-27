@@ -435,6 +435,10 @@ ds.glm <- function(formulas_string=NULL, data=NULL, family=NULL, offset=NULL, we
     
     
     cat("typeof(cally1):", typeof(cally1))
+    message("typeof(cally1):")
+    message(typeof(cally1))
+    ds.log("typeof(cally1):")
+    ds.log(typoof(cally1))
 
    study.summary.0 <- DSI::datashield.aggregate(datasources, cally1)
 
