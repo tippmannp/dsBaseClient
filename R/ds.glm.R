@@ -432,6 +432,9 @@ ds.glm <- function(formulas_string=NULL, data=NULL, family=NULL, offset=NULL, we
 #IDENTIFY THE CORRECT DIMENSION FOR START BETAs VIA CALLING FIRST COMPONENT OF glmDS
 
    cally1 <- call('glmDS1s', formulas_string, family, weights, offset, data)
+    
+    
+    cat("typeof(cally1):", typeof(cally1))
 
    study.summary.0 <- DSI::datashield.aggregate(datasources, cally1)
 
